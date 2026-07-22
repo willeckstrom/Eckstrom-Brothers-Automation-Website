@@ -67,6 +67,84 @@
     }
   })();
   </script>
+  <script>
+  // EBA "About us" section. Injected after the app bundle unpacks (the bundle
+  // replaces the whole document on render), placed right after the hero.
+  (function () {
+    if (window.__ebaAboutTimer) return;
+    window.__ebaAboutTimer = setInterval(function () {
+      var nav = document.querySelector('nav');
+      var ready = !document.getElementById('__bundler_thumbnail') && nav && nav.nextElementSibling;
+      if (!ready) return;
+      clearInterval(window.__ebaAboutTimer);
+      inject(nav);
+    }, 150);
+
+    function inject(nav) {
+      if (document.getElementById('eba-about')) return;
+      var root = nav.parentElement;
+      var hero = nav.nextElementSibling;
+
+      var style = document.createElement('style');
+      style.textContent = `
+        #eba-about{background:#fff;padding:96px 24px;font-family:'Public Sans',-apple-system,BlinkMacSystemFont,sans-serif}
+        #eba-about .eba-a-wrap{max-width:1200px;margin:0 auto}
+        #eba-about .eba-a-eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 12px}
+        #eba-about .eba-a-h{font-family:'Archivo',sans-serif;font-weight:700;font-size:36px;line-height:1.12;letter-spacing:-.02em;color:#14171C;margin:0 0 56px;max-width:640px}
+        #eba-about .eba-a-grid{display:grid;grid-template-columns:0.8fr 1fr;gap:56px;align-items:center}
+        #eba-about .eba-a-photo{width:100%;max-height:600px;object-fit:cover;object-position:center 18%;border-radius:12px;border:1px solid #E8EAEC;box-shadow:0 12px 24px rgba(11,13,16,.12),0 4px 8px rgba(11,13,16,.06);display:block}
+        #eba-about .eba-a-col{display:flex;flex-direction:column;gap:28px}
+        #eba-about .eba-a-name{font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;color:#14171C;margin:0 0 6px}
+        #eba-about .eba-a-role{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 14px}
+        #eba-about .eba-a-bio{font-size:15px;line-height:1.6;color:#5B6470;margin:0}
+        #eba-about .eba-a-divider{height:1px;background:#E8EAEC}
+        @media(max-width:900px){#eba-about{padding:64px 20px}#eba-about .eba-a-grid{grid-template-columns:1fr;gap:36px}#eba-about .eba-a-h{font-size:28px;margin-bottom:36px}#eba-about .eba-a-photo{max-height:520px}}
+      `;
+      document.head.appendChild(style);
+
+      var sec = document.createElement('section');
+      sec.id = 'eba-about';
+      sec.innerHTML = `
+        <div class="eba-a-wrap">
+          <p class="eba-a-eyebrow">About us</p>
+          <h2 class="eba-a-h">A father and son, rebuilding how construction runs.</h2>
+          <div class="eba-a-grid">
+            <img class="eba-a-photo" src="/media/founders.png" alt="Will and Steve Eckstrom, EBA co-founders">
+            <div class="eba-a-col">
+              <div>
+                <h3 class="eba-a-name">Will Eckstrom</h3>
+                <p class="eba-a-role">Co-Founder</p>
+                <p class="eba-a-bio">Will learned construction in the field and warehouse, working across California Drywall's prefabrication operations, project engineering, and preconstruction. Now bridging family heritage with modern automation, Will leads EBA's mission to eliminate the manual administrative work that slows down GCs and subs. His hands-on grasp of jobsite realities keeps EBA's automation focused on problems that actually matter.</p>
+              </div>
+              <div class="eba-a-divider"></div>
+              <div>
+                <h3 class="eba-a-name">Steve Eckstrom</h3>
+                <p class="eba-a-role">Co-Founder</p>
+                <p class="eba-a-bio">CEO of California Drywall, Steve is a living legend in North American construction. He transformed the company from a single-trade drywall firm into a diversified specialty contractor spanning metal framing, acoustical ceilings, fireproofing, and paint. His pioneering push into prefabrication reshaped how the company builds. A third-generation leader who started as a laborer, Steve brings unmatched field knowledge and relentless drive to EBA.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      root.insertBefore(sec, hero.nextElementSibling);
+
+      try {
+        var links = nav.querySelectorAll('a');
+        if (links.length && !nav.querySelector('[data-eba-about]')) {
+          var a = links[0].cloneNode(true);
+          a.textContent = 'About';
+          a.setAttribute('href', '#eba-about');
+          a.setAttribute('data-eba-about', '1');
+          a.addEventListener('click', function (e) {
+            e.preventDefault();
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          links[0].parentElement.insertBefore(a, links[0]);
+        }
+      } catch (e) {}
+    }
+  })();
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #F97316; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
