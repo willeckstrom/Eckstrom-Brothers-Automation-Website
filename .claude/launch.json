@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "EBA Website (live)",
+      "url": "https://ebautomation.app"
+    }
+  ]
+}
