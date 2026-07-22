@@ -1,0 +1,8 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EBA">
+  <!-- white tile so the mark reads on light and dark browser tabs -->
+  <rect width="64" height="64" rx="14" fill="#FFFFFF"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#D2D6DA" stroke-width="1.5"/>
+  <!-- hex bolt + automation core -->
+  <path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#14171C" stroke-width="5.5" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="8" fill="#F97316"/>
+</svg>

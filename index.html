@@ -3,6 +3,70 @@
 <head>
   <meta charset="utf-8">
   <title>Eckstrom Brothers Automation — Marketing Website</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <script>
+  // EBA intro video popup. The app bundle replaces the whole document when it
+  // unpacks (replaceWith below), so this lives on window: poll until the
+  // loader's elements are gone and the real app has rendered, then inject.
+  (function () {
+    if (window.__ebaIntroTimer) return;
+    window.__ebaIntroTimer = setInterval(function () {
+      var unpacked = !document.getElementById('__bundler_thumbnail') &&
+                     !document.getElementById('__bundler_loading') &&
+                     document.body && document.body.children.length > 0;
+      if (!unpacked) return;
+      clearInterval(window.__ebaIntroTimer);
+      setTimeout(inject, 700); // let the app paint first
+    }, 150);
+
+    function inject() {
+      if (document.getElementById('eba-intro')) return;
+      var style = document.createElement('style');
+      style.textContent =
+        '#eba-intro{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(11,13,16,0);transition:background .28s cubic-bezier(.2,0,0,1)}' +
+        '#eba-intro.eba-in{background:rgba(11,13,16,.58)}' +
+        '#eba-intro .eba-card{width:min(880px,94vw);background:#14171C;border:1px solid #2B3038;border-radius:16px;box-shadow:0 24px 48px rgba(11,13,16,.5),0 8px 16px rgba(11,13,16,.3);overflow:hidden;opacity:0;transform:scale(.94) translateY(12px);transition:opacity .32s cubic-bezier(.2,0,0,1),transform .32s cubic-bezier(.2,0,0,1)}' +
+        '#eba-intro.eba-in .eba-card{opacity:1;transform:none}' +
+        '#eba-intro .eba-head{display:flex;align-items:center;gap:12px;padding:14px 16px}' +
+        '#eba-intro .eba-hex{width:28px;height:28px;flex:none;transform:scale(.5) rotate(-90deg);opacity:0;transition:transform .45s cubic-bezier(.2,0,0,1) .2s,opacity .3s ease .2s}' +
+        '#eba-intro.eba-in .eba-hex{transform:none;opacity:1}' +
+        "#eba-intro .eba-title{font-family:'Archivo','Public Sans',-apple-system,sans-serif;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;flex:1}" +
+        '#eba-intro .eba-x{background:none;border:0;color:#838C97;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;border-radius:8px;transition:all .12s ease}' +
+        '#eba-intro .eba-x:hover{color:#fff;background:#1E2229}' +
+        '#eba-intro video{display:block;width:100%;height:auto;background:#0B0D10}';
+      document.head.appendChild(style);
+
+      var overlay = document.createElement('div');
+      overlay.id = 'eba-intro';
+      overlay.innerHTML =
+        '<div class="eba-card" role="dialog" aria-modal="true" aria-label="EBA product video">' +
+          '<div class="eba-head">' +
+            '<svg class="eba-hex" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#F97316"/></svg>' +
+            '<div class="eba-title">See EBA in action</div>' +
+            '<button class="eba-x" aria-label="Close">&times;</button>' +
+          '</div>' +
+          '<video src="/media/eba-product-explainer.mp4" autoplay muted playsinline controls></video>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { overlay.classList.add('eba-in'); });
+      });
+
+      function close() {
+        var v = overlay.querySelector('video');
+        if (v) v.pause();
+        overlay.classList.remove('eba-in');
+        document.removeEventListener('keydown', onKey);
+        setTimeout(function () { overlay.remove(); }, 300);
+      }
+      function onKey(e) { if (e.key === 'Escape') close(); }
+      document.addEventListener('keydown', onKey);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      overlay.querySelector('.eba-x').addEventListener('click', close);
+    }
+  })();
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #F97316; display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
