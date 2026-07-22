@@ -142,6 +142,32 @@
           links[0].parentElement.insertBefore(a, links[0]);
         }
       } catch (e) {}
+
+      // Hex-bolt mark in the top-left brand; whole brand becomes a home button.
+      try {
+        var brand = nav.children[0];
+        if (brand && !brand.querySelector('[data-eba-mark]')) {
+          brand.style.display = 'flex';
+          brand.style.alignItems = 'center';
+          brand.style.gap = '10px';
+          brand.style.cursor = 'pointer';
+          brand.setAttribute('role', 'button');
+          brand.setAttribute('tabindex', '0');
+          brand.setAttribute('aria-label', 'Eckstrom Brothers Automation — back to top');
+          var holder = document.createElement('span');
+          holder.innerHTML =
+            '<svg data-eba-mark="1" viewBox="0 0 64 64" width="26" height="26" style="flex:none;display:block" xmlns="http://www.w3.org/2000/svg">' +
+              '<path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#14171C" stroke-width="5.5" stroke-linejoin="round"/>' +
+              '<circle cx="32" cy="32" r="8" fill="#F97316"/>' +
+            '</svg>';
+          brand.insertBefore(holder.firstChild, brand.firstChild);
+          var goTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+          brand.addEventListener('click', goTop);
+          brand.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTop(); }
+          });
+        }
+      } catch (e) {}
     }
   })();
   </script>
