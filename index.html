@@ -45,6 +45,7 @@
           '<video src="/media/eba-product-explainer.mp4" playsinline controls></video>' +
         '</div>';
       document.body.appendChild(overlay);
+      var openedAt = Date.now(); // grace period so a double-click can't insta-close
       var v = overlay.querySelector('video');
       v.muted = opts.muted !== false;
       requestAnimationFrame(function () {
@@ -60,7 +61,9 @@
       }
       function onKey(e) { if (e.key === 'Escape') close(); }
       document.addEventListener('keydown', onKey);
-      overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay && Date.now() - openedAt > 400) close();
+      });
       overlay.querySelector('.eba-x').addEventListener('click', close);
     };
 
@@ -270,7 +273,8 @@
         if (!opts.noPush && !repeat) {
           try {
             history.pushState(null, '',
-              location.pathname + (name === 'about' ? '#about' : (HASH[name] || '')));
+              location.pathname + location.search +
+              (name === 'about' ? '#about' : (HASH[name] || '')));
           } catch (e) {}
         }
         if (name === 'about') {
@@ -288,6 +292,8 @@
         var t = e.target;
         var el = t && t.closest ? t.closest('a,button,[role="button"]') : null;
         if (!el) return;
+        // Let the browser handle modified clicks (new tab, etc.)
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         var name = el === L.about ? 'about' :
                    el === L.product ? 'product' :
                    el === L.cases ? 'cases' :
@@ -303,7 +309,7 @@
         }
         else if (txt === 'Talk to us') { stop(); show('contact'); }
         else if (txt === 'See how it works') {
-          stop(); show('home', { noPush: true });
+          stop(); show('home');
           if (steps) steps.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, true);
@@ -345,8 +351,11 @@
       if (initial !== 'home') {
         show(initial, { noPush: true, instant: true });
       } else {
-        // Intro video: only when landing on the homepage proper.
-        setTimeout(function () { window.__ebaPlayIntro({ muted: true }); }, 500);
+        // Intro video: only when landing on the homepage proper — and still
+        // on it when the timer fires (user may have navigated within 500ms).
+        setTimeout(function () {
+          if (current === 'home') window.__ebaPlayIntro({ muted: true });
+        }, 500);
       }
 
       function el(tag, cls, id) {
