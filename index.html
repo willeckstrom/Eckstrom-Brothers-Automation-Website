@@ -75,6 +75,24 @@
 
       injectStyles();
 
+      // ── Favicon: the bundle's document swap drops the original <head>
+      // links, so Chrome falls back to the globe. Re-add after the swap,
+      // with a versioned URL to bust Chrome's favicon cache.
+      try {
+        var oldIcons = document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]');
+        Array.prototype.forEach.call(oldIcons, function (n) { n.parentNode.removeChild(n); });
+        var icon = document.createElement('link');
+        icon.rel = 'icon';
+        icon.type = 'image/svg+xml';
+        icon.setAttribute('sizes', 'any');
+        icon.href = '/favicon.svg?v=2';
+        document.head.appendChild(icon);
+        var touch = document.createElement('link');
+        touch.rel = 'apple-touch-icon';
+        touch.href = '/favicon.svg?v=2';
+        document.head.appendChild(touch);
+      } catch (e) {}
+
       // ── About section (part of the home page, right after the hero) ──
       var about = el('section', 'eba-view', 'eba-about');
       about.innerHTML =
@@ -82,7 +100,7 @@
           '<p class="eba-eyebrow">About us</p>' +
           '<h2 class="eba-h2">A family of builders, rebuilding how construction runs.</h2>' +
           '<div class="eba-about-grid">' +
-            '<img class="eba-about-photo" src="/media/founders.png" alt="Will and Steve Eckstrom, EBA co-founders">' +
+            '<img class="eba-about-photo" src="/media/founders.png" alt="Will, Christian, and Steve Eckstrom — the founders of EBA">' +
             '<div class="eba-about-col">' +
               bio('Will Eckstrom', 'Co-founder',
                 "Will learned construction in the field and warehouse, working across California Drywall's prefabrication operations, project engineering, and preconstruction. Now bridging family heritage with modern automation, Will leads EBA's mission to eliminate the manual administrative work that slows down GCs and subs. His hands-on grasp of jobsite realities keeps EBA's automation focused on problems that actually matter.") +
@@ -201,6 +219,7 @@
         var name = (f.name && f.name.value || '').trim();
         var co = (f.company && f.company.value || '').trim();
         var msg = (f.message && f.message.value || '').trim();
+        if (!msg) { if (f.message) f.message.focus(); return; }
         var body = msg + '\n\n— ' + (name || 'Name') + (co ? ', ' + co : '');
         location.href = 'mailto:will.eckstrom@icloud.com?subject=' +
           encodeURIComponent('EBA — project inquiry') + '&body=' + encodeURIComponent(body);
