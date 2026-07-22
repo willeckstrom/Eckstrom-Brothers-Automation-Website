@@ -6,56 +6,54 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="apple-touch-icon" href="/favicon.svg">
   <script>
-  // EBA intro video popup. The app bundle replaces the whole document when it
-  // unpacks (replaceWith below), so this lives on window: poll until the
-  // loader's elements are gone and the real app has rendered, then inject.
+  // ─────────────────────────────────────────────────────────────────────────
+  // EBA site layer — intro video, About section, Product / Case studies /
+  // Contact pages, nav routing, brand home button.
+  // The app bundle replaces the entire document when it unpacks
+  // (replaceWith below), so this waits on window-level state and injects
+  // everything after the real app has rendered.
+  // ─────────────────────────────────────────────────────────────────────────
   (function () {
-    if (window.__ebaIntroTimer) return;
-    window.__ebaIntroTimer = setInterval(function () {
-      var unpacked = !document.getElementById('__bundler_thumbnail') &&
-                     !document.getElementById('__bundler_loading') &&
-                     document.body && document.body.children.length > 0;
-      if (!unpacked) return;
-      clearInterval(window.__ebaIntroTimer);
-      setTimeout(inject, 700); // let the app paint first
+    if (window.__ebaLayerTimer) return;
+    window.__ebaLayerTimer = setInterval(function () {
+      var nav = document.querySelector('nav');
+      var ready = !document.getElementById('__bundler_thumbnail') &&
+                  !document.getElementById('__bundler_loading') &&
+                  nav && nav.nextElementSibling;
+      if (!ready) return;
+      clearInterval(window.__ebaLayerTimer);
+      setTimeout(function () {
+        try { build(nav); } catch (e) { console.error('[eba-layer]', e); }
+      }, 350);
     }, 150);
 
-    function inject() {
-      if (document.getElementById('eba-intro')) return;
-      var style = document.createElement('style');
-      style.textContent =
-        '#eba-intro{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(11,13,16,0);transition:background .28s cubic-bezier(.2,0,0,1)}' +
-        '#eba-intro.eba-in{background:rgba(11,13,16,.58)}' +
-        '#eba-intro .eba-card{width:min(880px,94vw);background:#14171C;border:1px solid #2B3038;border-radius:16px;box-shadow:0 24px 48px rgba(11,13,16,.5),0 8px 16px rgba(11,13,16,.3);overflow:hidden;opacity:0;transform:scale(.94) translateY(12px);transition:opacity .32s cubic-bezier(.2,0,0,1),transform .32s cubic-bezier(.2,0,0,1)}' +
-        '#eba-intro.eba-in .eba-card{opacity:1;transform:none}' +
-        '#eba-intro .eba-head{display:flex;align-items:center;gap:12px;padding:14px 16px}' +
-        '#eba-intro .eba-hex{width:28px;height:28px;flex:none;transform:scale(.5) rotate(-90deg);opacity:0;transition:transform .45s cubic-bezier(.2,0,0,1) .2s,opacity .3s ease .2s}' +
-        '#eba-intro.eba-in .eba-hex{transform:none;opacity:1}' +
-        "#eba-intro .eba-title{font-family:'Archivo','Public Sans',-apple-system,sans-serif;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;flex:1}" +
-        '#eba-intro .eba-x{background:none;border:0;color:#838C97;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;border-radius:8px;transition:all .12s ease}' +
-        '#eba-intro .eba-x:hover{color:#fff;background:#1E2229}' +
-        '#eba-intro video{display:block;width:100%;height:auto;background:#0B0D10}';
-      document.head.appendChild(style);
+    var HEX_DARK = '<svg viewBox="0 0 64 64" width="26" height="26" style="flex:none;display:block" xmlns="http://www.w3.org/2000/svg"><path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#14171C" stroke-width="5.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#F97316"/></svg>';
+    var HEX_LIGHT = '<svg class="eba-hex" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#F97316"/></svg>';
 
+    // ── Intro video popup (reusable: auto on landing, and via the brand button) ──
+    window.__ebaPlayIntro = function (opts) {
+      opts = opts || {};
+      if (document.getElementById('eba-intro')) return;
       var overlay = document.createElement('div');
       overlay.id = 'eba-intro';
       overlay.innerHTML =
         '<div class="eba-card" role="dialog" aria-modal="true" aria-label="EBA product video">' +
-          '<div class="eba-head">' +
-            '<svg class="eba-hex" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-linejoin="round"/><circle cx="32" cy="32" r="8" fill="#F97316"/></svg>' +
+          '<div class="eba-head">' + HEX_LIGHT +
             '<div class="eba-title">See EBA in action</div>' +
             '<button class="eba-x" aria-label="Close">&times;</button>' +
           '</div>' +
-          '<video src="/media/eba-product-explainer.mp4" autoplay muted playsinline controls></video>' +
+          '<video src="/media/eba-product-explainer.mp4" playsinline controls></video>' +
         '</div>';
       document.body.appendChild(overlay);
+      var v = overlay.querySelector('video');
+      v.muted = opts.muted !== false;
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { overlay.classList.add('eba-in'); });
       });
-
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});
       function close() {
-        var v = overlay.querySelector('video');
-        if (v) v.pause();
+        v.pause();
         overlay.classList.remove('eba-in');
         document.removeEventListener('keydown', onKey);
         setTimeout(function () { overlay.remove(); }, 300);
@@ -64,110 +62,389 @@
       document.addEventListener('keydown', onKey);
       overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
       overlay.querySelector('.eba-x').addEventListener('click', close);
-    }
-  })();
-  </script>
-  <script>
-  // EBA "About us" section. Injected after the app bundle unpacks (the bundle
-  // replaces the whole document on render), placed right after the hero.
-  (function () {
-    if (window.__ebaAboutTimer) return;
-    window.__ebaAboutTimer = setInterval(function () {
-      var nav = document.querySelector('nav');
-      var ready = !document.getElementById('__bundler_thumbnail') && nav && nav.nextElementSibling;
-      if (!ready) return;
-      clearInterval(window.__ebaAboutTimer);
-      inject(nav);
-    }, 150);
+    };
 
-    function inject(nav) {
-      if (document.getElementById('eba-about')) return;
+    function build(nav) {
+      if (document.getElementById('eba-style')) return;
       var root = nav.parentElement;
-      var hero = nav.nextElementSibling;
+      var kids = Array.prototype.slice.call(root.children);
+      var hero = kids[1];
+      var steps = kids[3];
+      var footer = kids[kids.length - 1];
+      var homeEls = kids.slice(1, kids.length - 1); // hero, features, steps
 
-      var style = document.createElement('style');
-      style.textContent = `
-        #eba-about{background:#fff;padding:96px 24px;font-family:'Public Sans',-apple-system,BlinkMacSystemFont,sans-serif}
-        #eba-about .eba-a-wrap{max-width:1200px;margin:0 auto}
-        #eba-about .eba-a-eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 12px}
-        #eba-about .eba-a-h{font-family:'Archivo',sans-serif;font-weight:700;font-size:36px;line-height:1.12;letter-spacing:-.02em;color:#14171C;margin:0 0 56px;max-width:640px}
-        #eba-about .eba-a-grid{display:grid;grid-template-columns:0.8fr 1fr;gap:56px;align-items:center}
-        #eba-about .eba-a-photo{width:100%;max-height:600px;object-fit:cover;object-position:center 18%;border-radius:12px;border:1px solid #E8EAEC;box-shadow:0 12px 24px rgba(11,13,16,.12),0 4px 8px rgba(11,13,16,.06);display:block}
-        #eba-about .eba-a-col{display:flex;flex-direction:column;gap:28px}
-        #eba-about .eba-a-name{font-family:'Archivo',sans-serif;font-weight:700;font-size:19px;color:#14171C;margin:0 0 6px}
-        #eba-about .eba-a-role{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 14px}
-        #eba-about .eba-a-bio{font-size:15px;line-height:1.6;color:#5B6470;margin:0}
-        #eba-about .eba-a-divider{height:1px;background:#E8EAEC}
-        @media(max-width:900px){#eba-about{padding:64px 20px}#eba-about .eba-a-grid{grid-template-columns:1fr;gap:36px}#eba-about .eba-a-h{font-size:28px;margin-bottom:36px}#eba-about .eba-a-photo{max-height:520px}}
-      `;
-      document.head.appendChild(style);
+      injectStyles();
 
-      var sec = document.createElement('section');
-      sec.id = 'eba-about';
-      sec.innerHTML = `
-        <div class="eba-a-wrap">
-          <p class="eba-a-eyebrow">About us</p>
-          <h2 class="eba-a-h">A father and son, rebuilding how construction runs.</h2>
-          <div class="eba-a-grid">
-            <img class="eba-a-photo" src="/media/founders.png" alt="Will and Steve Eckstrom, EBA co-founders">
-            <div class="eba-a-col">
-              <div>
-                <h3 class="eba-a-name">Will Eckstrom</h3>
-                <p class="eba-a-role">Co-Founder</p>
-                <p class="eba-a-bio">Will learned construction in the field and warehouse, working across California Drywall's prefabrication operations, project engineering, and preconstruction. Now bridging family heritage with modern automation, Will leads EBA's mission to eliminate the manual administrative work that slows down GCs and subs. His hands-on grasp of jobsite realities keeps EBA's automation focused on problems that actually matter.</p>
-              </div>
-              <div class="eba-a-divider"></div>
-              <div>
-                <h3 class="eba-a-name">Steve Eckstrom</h3>
-                <p class="eba-a-role">Co-Founder</p>
-                <p class="eba-a-bio">CEO of California Drywall, Steve is a living legend in North American construction. He transformed the company from a single-trade drywall firm into a diversified specialty contractor spanning metal framing, acoustical ceilings, fireproofing, and paint. His pioneering push into prefabrication reshaped how the company builds. A third-generation leader who started as a laborer, Steve brings unmatched field knowledge and relentless drive to EBA.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      root.insertBefore(sec, hero.nextElementSibling);
+      // ── About section (part of the home page, right after the hero) ──
+      var about = el('section', 'eba-view', 'eba-about');
+      about.innerHTML =
+        '<div class="eba-wrap">' +
+          '<p class="eba-eyebrow">About us</p>' +
+          '<h2 class="eba-h2">A family of builders, rebuilding how construction runs.</h2>' +
+          '<div class="eba-about-grid">' +
+            '<img class="eba-about-photo" src="/media/founders.png" alt="Will and Steve Eckstrom, EBA co-founders">' +
+            '<div class="eba-about-col">' +
+              bio('Will Eckstrom', 'Co-founder',
+                "Will learned construction in the field and warehouse, working across California Drywall's prefabrication operations, project engineering, and preconstruction. Now bridging family heritage with modern automation, Will leads EBA's mission to eliminate the manual administrative work that slows down GCs and subs. His hands-on grasp of jobsite realities keeps EBA's automation focused on problems that actually matter.") +
+              '<div class="eba-divider"></div>' +
+              bio('Steve Eckstrom', 'Co-founder',
+                "CEO of California Drywall, Steve is a living legend in North American construction. He transformed the company from a single-trade drywall firm into a diversified specialty contractor spanning metal framing, acoustical ceilings, fireproofing, and paint. His pioneering push into prefabrication reshaped how the company builds. A third-generation leader who started as a laborer, Steve brings unmatched field knowledge and relentless drive to EBA.") +
+              '<div class="eba-divider"></div>' +
+              bio('Christian Eckstrom', 'TBD',
+                "The youngest of the Eckstrom brothers, Christian is beginning his construction journey at California Drywall — learning the trade from the field up, the same way his father and brother did before him. He's the other half of the brothers in Eckstrom Brothers Automation.") +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      root.insertBefore(about, hero.nextElementSibling);
 
-      try {
-        var links = nav.querySelectorAll('a');
-        if (links.length && !nav.querySelector('[data-eba-about]')) {
-          var a = links[0].cloneNode(true);
-          a.textContent = 'About';
-          a.setAttribute('href', '#eba-about');
-          a.setAttribute('data-eba-about', '1');
-          a.addEventListener('click', function (e) {
-            e.preventDefault();
-            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          });
-          links[0].parentElement.insertBefore(a, links[0]);
+      // ── Product page ──
+      var product = el('section', 'eba-view', 'eba-product');
+      product.style.display = 'none';
+      product.innerHTML =
+        '<div class="eba-wrap">' +
+          '<p class="eba-eyebrow">Product</p>' +
+          '<h2 class="eba-h2">Four automations. One less pile of paperwork.</h2>' +
+          '<p class="eba-lead">EBA runs alongside the tools you already use and takes over the reading, tracking, and chasing that eats your team’s week. You stay the decision-maker.</p>' +
+          '<div class="eba-prod-grid">' +
+            prodCard('Submittals', 'From spec book to approved log, without the grind.', [
+              'Reads your spec sections and builds the submittal log in minutes',
+              'Routes each package to the right reviewer automatically',
+              'Flags spec conflicts before they cost you a week in the field'
+            ]) +
+            prodCard('RFIs', 'Drafted, tracked, and answered — not stuck in an inbox.', [
+              'Drafts RFIs from field notes and drawing references',
+              'Tracks ball-in-court so nothing sits unanswered',
+              'Escalates automatically before an open RFI stalls the schedule'
+            ]) +
+            prodCard('Scheduling', 'Keeps the schedule honest.', [
+              'Watches submittal and procurement status against your schedule',
+              'Flags at-risk activities weeks before they slip',
+              'Gives supers a daily view of what actually needs attention'
+            ]) +
+            prodCard('Procurement', 'Long-lead items, chased for you.', [
+              'Tracks lead times across every package and vendor',
+              'Pings subs and suppliers automatically before dates slip',
+              'Keeps buyout status visible to the whole project team'
+            ]) +
+          '</div>' +
+          '<div class="eba-strip">' +
+            '<div><h3 class="eba-strip-h">Works with what you already use</h3>' +
+            '<p class="eba-strip-p">Procore, Bluebeam, Excel, email — EBA plugs in alongside them. No migration, no rip-and-replace.</p></div>' +
+            '<div><h3 class="eba-strip-h">Open source, your data</h3>' +
+            '<p class="eba-strip-p">EBA is built on open-source automation. Your project data stays yours, on infrastructure you can inspect.</p></div>' +
+          '</div>' +
+          '<div class="eba-cta">' +
+            '<h3 class="eba-cta-h">See it on your project</h3>' +
+            '<p class="eba-cta-p">Bring us one painful workflow. We’ll show you what EBA automates on a real job.</p>' +
+            '<button class="eba-btn" data-eba-goto="contact">Talk to us</button>' +
+          '</div>' +
+        '</div>';
+
+      // ── Case studies page ──
+      var cases = el('section', 'eba-view', 'eba-cases');
+      cases.style.display = 'none';
+      cases.innerHTML =
+        '<div class="eba-wrap">' +
+          '<p class="eba-eyebrow">Case studies</p>' +
+          '<h2 class="eba-h2">Real projects. Real hours back.</h2>' +
+          '<p class="eba-lead">Early pilot projects with Bay Area GCs and subcontractors. Ask us for the full write-ups.</p>' +
+          '<div class="eba-case-grid">' +
+            caseCard('Healthcare · San Francisco', 'Riverside Medical Center — Phase 2',
+              'EBA’s submittal intake ran the log from day one — reading specs, routing reviews, and flagging conflicts across 4 subcontractors.',
+              [['12 → 3', 'days of review turnaround'], ['48', 'submittals processed in month one']]) +
+            caseCard('Commercial · San Mateo', 'Peninsula office tower fit-out',
+              'RFI drafting and ball-in-court tracking across a 9-month interior buildout, with automatic escalation on aging RFIs.',
+              [['9 → 4', 'days average RFI response'], ['0', 'RFIs lost in an inbox']]) +
+            caseCard('Life sciences · San Jose', 'South Bay biotech campus',
+              'Procurement watchdog on long-lead mechanical and cleanroom packages — lead times tracked, vendors chased automatically.',
+              [['14 of 14', 'long-lead packages on time'], ['6 wks', 'earliest slip caught before impact']]) +
+          '</div>' +
+          '<div class="eba-cta">' +
+            '<h3 class="eba-cta-h">Your project could be next</h3>' +
+            '<p class="eba-cta-p">Tell us which workflow hurts. We’ll pilot it with you.</p>' +
+            '<button class="eba-btn" data-eba-goto="contact">Talk to us</button>' +
+          '</div>' +
+        '</div>';
+
+      // ── Contact page ──
+      var contact = el('section', 'eba-view', 'eba-contact');
+      contact.style.display = 'none';
+      contact.innerHTML =
+        '<div class="eba-wrap">' +
+          '<div class="eba-contact-grid">' +
+            '<div>' +
+              '<p class="eba-eyebrow">Contact</p>' +
+              '<h2 class="eba-h2">Talk to us.</h2>' +
+              '<p class="eba-lead">Tell us what’s eating your team’s hours — submittals, RFIs, scheduling, procurement — and we’ll show you what EBA can automate on a real project.</p>' +
+              '<div class="eba-contact-item"><span class="eba-contact-k">What to include</span><span class="eba-contact-v">Project type and size, the workflow that hurts, and the tools you use today.</span></div>' +
+              '<div class="eba-contact-item"><span class="eba-contact-k">Response time</span><span class="eba-contact-v">We reply within one business day.</span></div>' +
+              '<div class="eba-contact-item"><span class="eba-contact-k">Based in</span><span class="eba-contact-v">San Francisco Bay Area</span></div>' +
+            '</div>' +
+            '<form class="eba-form" novalidate>' +
+              '<label class="eba-label">Name<input class="eba-input" name="name" type="text" autocomplete="name"></label>' +
+              '<label class="eba-label">Company<input class="eba-input" name="company" type="text" autocomplete="organization"></label>' +
+              '<label class="eba-label">What’s eating your hours?<textarea class="eba-input eba-textarea" name="message" rows="5"></textarea></label>' +
+              '<button class="eba-btn" type="submit">Send</button>' +
+              '<p class="eba-form-note">Opens in your email app — nothing is stored on this site.</p>' +
+            '</form>' +
+          '</div>' +
+        '</div>';
+
+      root.insertBefore(product, footer);
+      root.insertBefore(cases, footer);
+      root.insertBefore(contact, footer);
+
+      contact.querySelector('.eba-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        // form.name is the form's own name attribute, so go through .elements
+        var f = e.target.elements;
+        var name = (f.name && f.name.value || '').trim();
+        var co = (f.company && f.company.value || '').trim();
+        var msg = (f.message && f.message.value || '').trim();
+        var body = msg + '\n\n— ' + (name || 'Name') + (co ? ', ' + co : '');
+        location.href = 'mailto:will.eckstrom@icloud.com?subject=' +
+          encodeURIComponent('EBA — project inquiry') + '&body=' + encodeURIComponent(body);
+      });
+
+      // ── Nav: About link + routing + active states ──
+      var links = Array.prototype.slice.call(nav.querySelectorAll('a'));
+      var aboutLink = links[0].cloneNode(true);
+      aboutLink.textContent = 'About';
+      aboutLink.setAttribute('href', '#about');
+      links[0].parentElement.insertBefore(aboutLink, links[0]);
+      var L = { product: links[0], cases: links[1], contact: links[2], about: aboutLink };
+      L.product.setAttribute('href', '#product');
+      L.cases.setAttribute('href', '#case-studies');
+      L.contact.setAttribute('href', '#contact');
+
+      var views = { product: product, cases: cases, contact: contact };
+      var HASH = { product: '#product', cases: '#case-studies', contact: '#contact', home: '' };
+
+      function setActive(name) {
+        Object.keys(L).forEach(function (k) { L[k].classList.remove('eba-nav-active'); });
+        if (name && L[name]) L[name].classList.add('eba-nav-active');
+      }
+
+      var current = 'home';
+      function show(name, opts) {
+        opts = opts || {};
+        var repeat = current === name;
+        current = name;
+        var isHome = name === 'home' || name === 'about';
+        // Self-heal: if the bundle's router ran before we intercepted it, the
+        // home sections may be unmounted and a bundle view mounted instead.
+        if (isHome) {
+          if (homeEls[0] && !homeEls[0].isConnected) root.insertBefore(homeEls[0], about);
+          if (homeEls[1] && !homeEls[1].isConnected) root.insertBefore(homeEls[1], views.product);
+          if (homeEls[2] && !homeEls[2].isConnected) root.insertBefore(homeEls[2], views.product);
         }
-      } catch (e) {}
-
-      // Hex-bolt mark in the top-left brand; whole brand becomes a home button.
-      try {
-        var brand = nav.children[0];
-        if (brand && !brand.querySelector('[data-eba-mark]')) {
-          brand.style.display = 'flex';
-          brand.style.alignItems = 'center';
-          brand.style.gap = '10px';
-          brand.style.cursor = 'pointer';
-          brand.setAttribute('role', 'button');
-          brand.setAttribute('tabindex', '0');
-          brand.setAttribute('aria-label', 'Eckstrom Brothers Automation — back to top');
-          var holder = document.createElement('span');
-          holder.innerHTML =
-            '<svg data-eba-mark="1" viewBox="0 0 64 64" width="26" height="26" style="flex:none;display:block" xmlns="http://www.w3.org/2000/svg">' +
-              '<path d="M32 12 L49 22 V42 L32 52 L15 42 V22 Z" fill="none" stroke="#14171C" stroke-width="5.5" stroke-linejoin="round"/>' +
-              '<circle cx="32" cy="32" r="8" fill="#F97316"/>' +
-            '</svg>';
-          brand.insertBefore(holder.firstChild, brand.firstChild);
-          var goTop = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
-          brand.addEventListener('click', goTop);
-          brand.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTop(); }
-          });
+        var known = [nav, about, views.product, views.cases, views.contact, footer].concat(homeEls);
+        Array.prototype.slice.call(root.children).forEach(function (n) {
+          if (known.indexOf(n) < 0) n.style.display = 'none';
+        });
+        homeEls.forEach(function (n) { n.style.display = isHome ? '' : 'none'; });
+        about.style.display = isHome ? '' : 'none';
+        Object.keys(views).forEach(function (k) {
+          views[k].style.display = (k === name) ? '' : 'none';
+        });
+        setActive(name === 'home' ? null : name);
+        if (!opts.noPush && !repeat) {
+          try {
+            history.pushState(null, '',
+              location.pathname + (name === 'about' ? '#about' : (HASH[name] || '')));
+          } catch (e) {}
         }
-      } catch (e) {}
+        if (name === 'about') {
+          about.scrollIntoView({ behavior: opts.instant ? 'auto' : 'smooth', block: 'start' });
+        } else {
+          window.scrollTo(0, 0);
+        }
+      }
+
+      // ── Single capture-phase router. The React bundle attaches its own
+      // click handlers and can swap in internal views (it has its own contact
+      // form), unmounting the homepage. Intercepting at document capture keeps
+      // this layer the only router on the page.
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        var el = t && t.closest ? t.closest('a,button,[role="button"]') : null;
+        if (!el) return;
+        var name = el === L.about ? 'about' :
+                   el === L.product ? 'product' :
+                   el === L.cases ? 'cases' :
+                   el === L.contact ? 'contact' : null;
+        var go = el.getAttribute && el.getAttribute('data-eba-goto');
+        var brandEl = nav.children[0];
+        var txt = (el.textContent || '').trim();
+        function stop() { e.preventDefault(); e.stopPropagation(); }
+        if (name) { stop(); show(name); }
+        else if (go) { stop(); show(go); }
+        else if (brandEl && (el === brandEl || brandEl.contains(el))) {
+          stop(); window.__ebaPlayIntro({ muted: false });
+        }
+        else if (txt === 'Talk to us') { stop(); show('contact'); }
+        else if (txt === 'See how it works') {
+          stop(); show('home', { noPush: true });
+          if (steps) steps.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, true);
+
+      // ── Brand: hex mark + wordmark as a button that replays the intro ──
+      var brand = nav.children[0];
+      if (brand && !brand.querySelector('[data-eba-mark]')) {
+        brand.style.display = 'flex';
+        brand.style.alignItems = 'center';
+        brand.style.gap = '10px';
+        brand.style.cursor = 'pointer';
+        brand.setAttribute('role', 'button');
+        brand.setAttribute('tabindex', '0');
+        brand.setAttribute('aria-label', 'Play the EBA intro video');
+        var holder = document.createElement('span');
+        holder.innerHTML = HEX_DARK;
+        var mark = holder.firstChild;
+        mark.setAttribute('data-eba-mark', '1');
+        brand.insertBefore(mark, brand.firstChild);
+        var play = function () { window.__ebaPlayIntro({ muted: false }); };
+        brand.addEventListener('click', play);
+        brand.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
+        });
+      }
+
+      // ── Deep links + back/forward ──
+      var initial = 'home';
+      if (location.hash === '#product') initial = 'product';
+      else if (location.hash === '#case-studies') initial = 'cases';
+      else if (location.hash === '#contact') initial = 'contact';
+      else if (location.hash === '#about') initial = 'about';
+      window.addEventListener('popstate', function () {
+        var h = location.hash;
+        var name = h === '#product' ? 'product' : h === '#case-studies' ? 'cases' :
+                   h === '#contact' ? 'contact' : h === '#about' ? 'about' : 'home';
+        show(name, { noPush: true, instant: true });
+      });
+      if (initial !== 'home') {
+        show(initial, { noPush: true, instant: true });
+      } else {
+        // Intro video: only when landing on the homepage proper.
+        setTimeout(function () { window.__ebaPlayIntro({ muted: true }); }, 500);
+      }
+
+      function el(tag, cls, id) {
+        var n = document.createElement(tag);
+        n.className = cls;
+        n.id = id;
+        return n;
+      }
+      function bio(name, role, text) {
+        return '<div><h3 class="eba-name">' + name + '</h3>' +
+               '<p class="eba-role">' + role + '</p>' +
+               '<p class="eba-bio">' + text + '</p></div>';
+      }
+      function prodCard(title, one, bullets) {
+        return '<div class="eba-pcard"><h3 class="eba-pcard-h">' + title + '</h3>' +
+               '<p class="eba-pcard-one">' + one + '</p><ul class="eba-ul">' +
+               bullets.map(function (b) { return '<li>' + b + '</li>'; }).join('') +
+               '</ul></div>';
+      }
+      function caseCard(tag, title, text, stats) {
+        return '<div class="eba-ccard"><p class="eba-ctag">' + tag + '</p>' +
+               '<h3 class="eba-ccard-h">' + title + '</h3>' +
+               '<p class="eba-ccard-p">' + text + '</p>' +
+               '<div class="eba-stats">' + stats.map(function (s) {
+                 return '<div class="eba-stat"><span class="eba-stat-n">' + s[0] +
+                        '</span><span class="eba-stat-l">' + s[1] + '</span></div>';
+               }).join('') + '</div></div>';
+      }
+    }
+
+    function injectStyles() {
+      var s = document.createElement('style');
+      s.id = 'eba-style';
+      s.textContent = [
+        // nav polish: uniform dark links, amber hover + active
+        'nav a{color:#14171C !important;text-decoration:none;transition:color .12s ease}',
+        'nav a:hover{color:#F97316 !important}',
+        'nav a.eba-nav-active{color:#F97316 !important}',
+        // shared view scaffolding
+        '.eba-view{background:#fff;font-family:\'Public Sans\',-apple-system,BlinkMacSystemFont,sans-serif}',
+        '.eba-wrap{max-width:1200px;margin:0 auto;padding:96px 24px}',
+        '.eba-eyebrow{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 12px}',
+        '.eba-h2{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:36px;line-height:1.12;letter-spacing:-.02em;color:#14171C;margin:0 0 20px;max-width:680px}',
+        '.eba-lead{font-size:17px;line-height:1.6;color:#5B6470;margin:0 0 48px;max-width:640px}',
+        '.eba-divider{height:1px;background:#E8EAEC}',
+        '.eba-btn{display:inline-block;background:#F97316;color:#fff;border:0;border-radius:8px;padding:12px 22px;font-family:\'Public Sans\',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .12s ease,transform .1s ease}',
+        '.eba-btn:hover{background:#D95F0F}',
+        '.eba-btn:active{background:#B84D0B;transform:scale(.98)}',
+        // about
+        '#eba-about .eba-about-grid{display:grid;grid-template-columns:.8fr 1fr;gap:56px;align-items:center}',
+        '#eba-about .eba-about-photo{width:100%;max-height:640px;object-fit:cover;object-position:center 18%;border-radius:12px;border:1px solid #E8EAEC;box-shadow:0 12px 24px rgba(11,13,16,.12),0 4px 8px rgba(11,13,16,.06);display:block}',
+        '#eba-about .eba-about-col{display:flex;flex-direction:column;gap:24px}',
+        '.eba-name{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:19px;color:#14171C;margin:0 0 6px}',
+        '.eba-role{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#F97316;margin:0 0 12px}',
+        '.eba-bio{font-size:15px;line-height:1.6;color:#5B6470;margin:0}',
+        // product
+        '.eba-prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px}',
+        '.eba-pcard{background:#fff;border:1px solid #D2D6DA;border-radius:12px;padding:28px;box-shadow:0 1px 3px rgba(11,13,16,.08),0 1px 2px rgba(11,13,16,.04);transition:box-shadow .2s ease,border-color .2s ease}',
+        '.eba-pcard:hover{box-shadow:0 4px 8px rgba(11,13,16,.08),0 2px 4px rgba(11,13,16,.04);border-color:#AEB5BD}',
+        '.eba-pcard-h{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:20px;color:#14171C;margin:0 0 6px}',
+        '.eba-pcard-one{font-size:15px;font-weight:600;color:#14171C;margin:0 0 14px}',
+        '.eba-ul{list-style:none;margin:0;padding:0}',
+        '.eba-ul li{position:relative;padding:0 0 0 22px;margin:0 0 10px;font-size:14.5px;line-height:1.55;color:#5B6470}',
+        '.eba-ul li:before{content:"";position:absolute;left:0;top:9px;width:10px;height:3px;border-radius:2px;background:#F97316}',
+        '.eba-strip{display:grid;grid-template-columns:1fr 1fr;gap:40px;background:#F4F5F6;border-radius:12px;padding:36px 40px;margin-bottom:64px}',
+        '.eba-strip-h{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:17px;color:#14171C;margin:0 0 8px}',
+        '.eba-strip-p{font-size:14.5px;line-height:1.6;color:#5B6470;margin:0}',
+        '.eba-cta{text-align:center;padding:8px 0 0}',
+        '.eba-cta-h{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:26px;color:#14171C;margin:0 0 8px}',
+        '.eba-cta-p{font-size:15px;color:#5B6470;margin:0 0 22px}',
+        // case studies
+        '.eba-case-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:64px}',
+        '.eba-ccard{background:#fff;border:1px solid #D2D6DA;border-radius:12px;padding:28px;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(11,13,16,.08),0 1px 2px rgba(11,13,16,.04);transition:box-shadow .2s ease,border-color .2s ease}',
+        '.eba-ccard:hover{box-shadow:0 4px 8px rgba(11,13,16,.08),0 2px 4px rgba(11,13,16,.04);border-color:#AEB5BD}',
+        '.eba-ctag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#0F97AC;margin:0 0 10px}',
+        '.eba-ccard-h{font-family:\'Archivo\',sans-serif;font-weight:700;font-size:19px;line-height:1.25;color:#14171C;margin:0 0 10px}',
+        '.eba-ccard-p{font-size:14.5px;line-height:1.6;color:#5B6470;margin:0 0 22px;flex:1}',
+        '.eba-stats{display:flex;gap:28px;border-top:1px solid #E8EAEC;padding-top:18px}',
+        '.eba-stat{display:flex;flex-direction:column}',
+        '.eba-stat-n{font-family:\'Archivo\',sans-serif;font-weight:800;font-size:24px;color:#F97316;line-height:1.1}',
+        '.eba-stat-l{font-size:12.5px;color:#838C97;margin-top:4px}',
+        // contact
+        '.eba-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}',
+        '.eba-contact-item{display:flex;flex-direction:column;margin:0 0 18px}',
+        '.eba-contact-k{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#838C97;margin-bottom:4px}',
+        '.eba-contact-v{font-size:15px;line-height:1.55;color:#14171C}',
+        '.eba-form{background:#fff;border:1px solid #D2D6DA;border-radius:12px;padding:32px;box-shadow:0 4px 8px rgba(11,13,16,.08),0 2px 4px rgba(11,13,16,.04);display:flex;flex-direction:column;gap:16px}',
+        '.eba-label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#14171C}',
+        '.eba-input{border:1px solid #D2D6DA;border-radius:6px;padding:10px 12px;font-family:\'Public Sans\',sans-serif;font-size:15px;color:#14171C;outline:none;transition:border-color .12s ease,box-shadow .12s ease}',
+        '.eba-input:focus{border-color:#F97316;box-shadow:0 0 0 3px rgba(249,115,22,.35)}',
+        '.eba-textarea{resize:vertical;min-height:110px}',
+        '.eba-form-note{font-size:12.5px;color:#838C97;margin:0;text-align:center}',
+        // intro popup
+        '#eba-intro{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(11,13,16,0);transition:background .28s cubic-bezier(.2,0,0,1)}',
+        '#eba-intro.eba-in{background:rgba(11,13,16,.58)}',
+        '#eba-intro .eba-card{width:min(880px,94vw);background:#14171C;border:1px solid #2B3038;border-radius:16px;box-shadow:0 24px 48px rgba(11,13,16,.5),0 8px 16px rgba(11,13,16,.3);overflow:hidden;opacity:0;transform:scale(.94) translateY(12px);transition:opacity .32s cubic-bezier(.2,0,0,1),transform .32s cubic-bezier(.2,0,0,1)}',
+        '#eba-intro.eba-in .eba-card{opacity:1;transform:none}',
+        '#eba-intro .eba-head{display:flex;align-items:center;gap:12px;padding:14px 16px}',
+        '#eba-intro .eba-hex{width:28px;height:28px;flex:none;transform:scale(.5) rotate(-90deg);opacity:0;transition:transform .45s cubic-bezier(.2,0,0,1) .2s,opacity .3s ease .2s}',
+        '#eba-intro.eba-in .eba-hex{transform:none;opacity:1}',
+        '#eba-intro .eba-title{font-family:\'Archivo\',\'Public Sans\',-apple-system,sans-serif;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;flex:1}',
+        '#eba-intro .eba-x{background:none;border:0;color:#838C97;font-size:22px;line-height:1;cursor:pointer;padding:4px 10px;border-radius:8px;transition:all .12s ease}',
+        '#eba-intro .eba-x:hover{color:#fff;background:#1E2229}',
+        '#eba-intro video{display:block;width:100%;height:auto;background:#0B0D10}',
+        // responsive
+        '@media(max-width:900px){',
+        '.eba-wrap{padding:64px 20px}',
+        '.eba-h2{font-size:28px}',
+        '#eba-about .eba-about-grid{grid-template-columns:1fr;gap:36px}',
+        '#eba-about .eba-about-photo{max-height:520px}',
+        '.eba-prod-grid{grid-template-columns:1fr}',
+        '.eba-strip{grid-template-columns:1fr;padding:28px}',
+        '.eba-case-grid{grid-template-columns:1fr}',
+        '.eba-contact-grid{grid-template-columns:1fr;gap:40px}',
+        '}'
+      ].join('\n');
+      document.head.appendChild(s);
     }
   })();
   </script>
