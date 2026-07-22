@@ -1,0 +1,121 @@
+<!-- About Us Section — add to Claude Design marketing site -->
+<!-- Photo placeholder: 880×660px, will replace with actual founders photo -->
+
+<style>
+  .about-section {
+    background: #FFFFFF;
+    padding: 80px 24px;
+  }
+  .about-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .about-header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+  .about-header h2 {
+    font-family: 'Archivo', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #14171C;
+    margin: 0;
+  }
+  .about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .about-photo {
+    grid-column: 1 / -1;
+    margin-bottom: 16px;
+  }
+  .about-photo img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+  }
+  .about-photo-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #F4F5F6;
+    border: 2px dashed #D2D6DA;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #838C97;
+    font-size: 14px;
+    font-family: 'Public Sans', sans-serif;
+    margin-bottom: 48px;
+  }
+  .founder {
+    display: flex;
+    flex-direction: column;
+  }
+  .founder-name {
+    font-family: 'Archivo', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #14171C;
+    margin: 0 0 8px 0;
+  }
+  .founder-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #F97316;
+    margin: 0 0 16px 0;
+  }
+  .founder-bio {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #5B6470;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .about-content {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .about-header h2 {
+      font-size: 28px;
+    }
+    .about-section {
+      padding: 60px 16px;
+    }
+  }
+</style>
+
+<section class="about-section">
+  <div class="about-container">
+    <div class="about-header">
+      <h2>About EBA</h2>
+    </div>
+
+    <!-- Photo -->
+    <div class="about-photo">
+      <img src="/media/founders.png" alt="Steve and Will Eckstrom, EBA co-founders">
+    </div>
+
+    <!-- Founder Bios -->
+    <div class="about-content">
+      <div class="founder">
+        <h3 class="founder-name">Will Eckstrom</h3>
+        <p class="founder-title">Co-Founder</p>
+        <p class="founder-bio">Will learned construction in the field and warehouse, working across California Drywall's prefabrication operations, project engineering, and preconstruction. Now bridging family heritage with modern automation, Will leads EBA's mission to eliminate manual administrative work that slows down GCs and subs. His hands-on understanding of jobsite realities ensures EBA's automation solves problems that matter.</p>
+      </div>
+
+      <div class="founder">
+        <h3 class="founder-name">Steve Eckstrom</h3>
+        <p class="founder-title">Co-Founder</p>
+        <p class="founder-bio">CEO of California Drywall, Steve is a living legend in North American construction. Over decades, he transformed the company from a single-trade drywall firm into a diversified specialty contractor spanning metal framing, acoustical ceilings, fireproofing, and paint. His pioneering vision for prefabrication and off-site manufacturing has reshaped how California Drywall executes work. A third-generation leader who started as a laborer, Steve brings unmatched field knowledge and relentless drive for innovation to EBA.</p>
+      </div>
+    </div>
+  </div>
+</section>
